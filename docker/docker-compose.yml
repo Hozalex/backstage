@@ -1,0 +1,44 @@
+services:
+  backstage:
+    image: backstage:latest
+    container_name: backstage
+    ports:
+      - "7007:7007"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - APP_CONFIG_app_baseUrl=http://localhost:7007
+      - APP_CONFIG_backend_baseUrl=http://localhost:7007/api
+      - POSTGRES_USER=backstage
+      - POSTGRES_PASSWORD=backstage
+      - POSTGRES_DB=backstage
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+    volumes:
+      - ../app-config.production.yaml:/app/app-config.production.yaml
+      - ../app-config.yaml:/app/app-config.yaml
+    networks:
+      - backstage-network
+  db:
+    image: postgres:17
+    container_name: backstage-db
+    environment:
+      - POSTGRES_USER=backstage
+      - POSTGRES_PASSWORD=backstage
+      - POSTGRES_DB=backstage
+    ports:
+      - "5432:5432"
+    volumes:
+      - D:\Documents\backstage\postgresql\data:/var/lib/postgresql/data
+    networks:
+      - backstage-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U backstage"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+networks:
+  backstage-network:
+    driver: bridge
