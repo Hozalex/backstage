@@ -2,7 +2,7 @@ name: Docker Image CI
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "dev" ]
   pull_request:
     branches: [ "master" ]
 
@@ -15,4 +15,4 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Build the Docker image
-      run: docker build . --file .\docker\Dockerfile-multistage --tag backstage:$(date +%s)
+      run: docker build . --file ./docker/Dockerfile-multistage --tag backstage:$(date +%s)
