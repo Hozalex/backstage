@@ -43,7 +43,11 @@ import { TechRadarPage } from '@backstage-community/plugin-tech-radar';
 // import LightIcon from '@material-ui/icons/WbSunny';
 // import { UnifiedThemeProvider} from '@backstage/theme';
 // import { homeTheme } from './themes/homeTheme';
-// 
+//
+// Home page
+import { HomepageCompositionRoot } from '@backstage/plugin-home';
+import { HomePage } from './components/home/HomePage';
+//
 
 const app = createApp({
   apis,
@@ -94,11 +98,13 @@ const app = createApp({
 
 const routes = (
   <FlatRoutes>
+    <Route path="/" element={<HomepageCompositionRoot />}>
+      <HomePage />
+    </Route>
     <Route
       path="/tech-radar"
       element={<TechRadarPage width={1500} height={800} />}
     />
-    <Route path="/" element={<Navigate to="catalog" />} />
     <Route path="/catalog" element={<CatalogIndexPage />} />
     <Route
       path="/catalog/:namespace/:kind/:name"
