@@ -1,0 +1,28 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: backstage_postgres
+    restart: unless-stopped
+    env_file: ../.env
+    volumes:
+      - ../../postgresql/data:/var/lib/postgresql/data
+    networks:
+      - backstage-net
+
+  backstage:
+    build:
+      context: ../
+      dockerfile: ./docker/Dockerfile
+    container_name: backstage_app
+    restart: unless-stopped
+    env_file: ../.env
+    ports:
+      - "7007:7007"
+    depends_on:
+      - postgres
+    networks:
+      - backstage-net
+
+networks:
+  backstage-net:
+    driver: bridge
