@@ -14,8 +14,13 @@ services:
       context: ../
       dockerfile: ./docker/Dockerfile
     container_name: backstage_app
+    command: ["node", "packages/backend", "--config", "app-config.yaml", "--config", "app-config.production.yaml"]
     restart: unless-stopped
     env_file: ../.env
+    environment:
+      - LOG_LEVEL=warn
+    volumes:
+      - ../app-config.production.yaml:/app/app-config.production.yaml
     ports:
       - "7007:7007"
     depends_on:
