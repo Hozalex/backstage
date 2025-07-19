@@ -70,7 +70,7 @@ catalog:
     github:
       # the provider ID can be any camelCase string
       providerId:
-        organization: 'Hozalex' # string
+        organization: ${GITHUB_ORG} # string
         catalogPath: '/catalog-info.yaml' # string
         filters:
           branch: 'master' # string

@@ -1,10 +1,12 @@
 # [Backstage](https://backstage.io)
 
-This is your newly scaffolded Backstage App, Good Luck!
+Configs:
+- add .env file to root directory
+- start docker desktop kubernetes cluster or change kubernetes url in app-config.production.yaml
 
-To start the app, run:
+Docker compose:
+- create directory for database
+- add "volumes: postgresql/data:/var/lib/postgresql/data" to docker-compose.yml
 
-```sh
-yarn install
-yarn start
-```
+Start:
+- docker compose -f .\docker\docker-compose.yml up -d
