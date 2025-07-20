@@ -3,6 +3,7 @@
 Configs:
 - add .env file to root directory
 - start docker desktop kubernetes cluster or change kubernetes url in app-config.production.yaml
+- apply rbac to k8s examples\kubernetes-rbac.yml
 
 Docker compose:
 - create directory for database
