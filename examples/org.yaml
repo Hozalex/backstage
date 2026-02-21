@@ -12,7 +12,7 @@ kind: User
 metadata:
   name: hozalex
 spec:
-  memberOf: [admins]
+  memberOf: [admins,developers]
 ---
 # https://backstage.io/docs/features/software-catalog/descriptor-format#kind-group
 apiVersion: backstage.io/v1alpha1
@@ -28,6 +28,15 @@ apiVersion: backstage.io/v1alpha1
 kind: Group
 metadata:
   name: admins
+spec:
+  type: team
+  children: []
+---
+# https://backstage.io/docs/features/software-catalog/descriptor-format#kind-group
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: developers
 spec:
   type: team
   children: []
