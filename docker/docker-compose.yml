@@ -5,7 +5,7 @@ services:
     restart: unless-stopped
     env_file: ../.env
     volumes:
-      - ../../postgresql/data:/var/lib/postgresql/data
+      - ./postgresql/data:/var/lib/postgresql/data
     networks:
       - backstage-net
 
