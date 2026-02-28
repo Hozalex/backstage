@@ -37,17 +37,30 @@ import { RequirePermission } from '@backstage/plugin-permission-react';
 import { catalogEntityCreatePermission } from '@backstage/plugin-catalog-common/alpha';
 import { githubAuthApiRef } from '@backstage/core-plugin-api';
 import { TechRadarPage } from '@backstage-community/plugin-tech-radar';
-// themes
-// import { ThemeProvider } from '@material-ui/core/styles';
-// import CssBaseline from '@material-ui/core/CssBaseline';
-// import LightIcon from '@material-ui/icons/WbSunny';
-// import { UnifiedThemeProvider} from '@backstage/theme';
-// import { homeTheme } from './themes/homeTheme';
-//
+
+// Themes
+import CssBaseline from '@material-ui/core/CssBaseline';
+import {
+  UnifiedThemeProvider,
+  createUnifiedTheme,
+  palettes,
+  themes,
+} from '@backstage/theme';
+
 // Home page
 import { HomepageCompositionRoot } from '@backstage/plugin-home';
 import { HomePage } from './components/home/HomePage';
-//
+
+// Custom dark theme with a neutral grey background instead of the default #333333
+const darkTheme = createUnifiedTheme({
+  palette: {
+    ...palettes.dark,
+    background: {
+      default: '#1e1e1e',
+      paper: '#2d2d2d',
+    },
+  },
+});
 
 const app = createApp({
   apis,
@@ -76,24 +89,42 @@ const app = createApp({
         providers={[
           'guest',
           {
-          id: 'github-auth-provider',
-          title: 'GitHub',
-          message: 'Sign in using GitHub',
-          apiRef: githubAuthApiRef,
-          }
-      ]}
+            id: 'github-auth-provider',
+            title: 'GitHub',
+            message: 'Sign in using GitHub',
+            apiRef: githubAuthApiRef,
+          },
+        ]}
       />
     ),
   },
-  // themes: [{
-  //   id: 'home-theme',
-  //   title: 'My Custom Theme',
-  //   variant: 'light',
-  //   icon: <LightIcon />,
-  //   Provider: ({ children }) => (
-  //     <UnifiedThemeProvider theme={homeTheme} children={children} />
-  //   ),
-  // }]
+  // Explicitly register themes with CssBaseline so the body background
+  // is properly set in dark mode (UnifiedThemeProvider alone does not
+  // apply CssBaseline, leaving the body background white).
+  themes: [
+    {
+      id: 'light',
+      title: 'Light',
+      variant: 'light',
+      Provider: ({ children }) => (
+        <UnifiedThemeProvider theme={themes.light}>
+          <CssBaseline />
+          {children}
+        </UnifiedThemeProvider>
+      ),
+    },
+    {
+      id: 'dark',
+      title: 'Dark',
+      variant: 'dark',
+      Provider: ({ children }) => (
+        <UnifiedThemeProvider theme={darkTheme}>
+          <CssBaseline />
+          {children}
+        </UnifiedThemeProvider>
+      ),
+    },
+  ],
 });
 
 const routes = (

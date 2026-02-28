@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "backstage-docker",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["--yes", "http-proxy-cli", "http://localhost:7007", "--port", "3100"],
+      "port": 3100
+    }
+  ]
+}

@@ -22,6 +22,7 @@ services:
     volumes:
       - ../app-config.production.yaml:/app/app-config.production.yaml
       - ../examples:/app/examples
+      - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - "7007:7007"
     depends_on:

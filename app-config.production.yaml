@@ -2,6 +2,22 @@ app:
   # Should be the same as backend.baseUrl when using the `app-backend` plugin.
   baseUrl: http://localhost:7007
 
+# Uncomment when GITLAB_TOKEN is set in .env
+# proxy:
+#   endpoints:
+#     '/gitlab/api':
+#       target: https://gitlab.com/api/v4
+#       allowedHeaders: ['Authorization']
+#       headers:
+#         Authorization: Bearer ${GITLAB_TOKEN}
+
+techdocs:
+  builder: 'local'
+  generator:
+    runIn: 'local'
+  publisher:
+    type: 'local'
+
 backend:
   # Note that the baseUrl should be the URL that the browser and other clients
   # should use when communicating with the backend, i.e. it needs to be
@@ -27,6 +43,15 @@ backend:
       # ssl:
       #   ca: # if you have a CA file and want to verify it you can uncomment this section
       #     $file: <file-path>/ca/server.crt
+
+# Uncomment and set GITLAB_TOKEN in .env to enable GitLab integration
+# integrations:
+#   gitlab:
+#     - host: gitlab.com
+#       token: ${GITLAB_TOKEN}
+
+# gitlab:
+#   proxySecure: false
 
 auth:
   # see https://backstage.io/docs/auth/ to learn about auth providers
@@ -79,11 +104,18 @@ catalog:
         filters:
           branch: 'master' # string
           repository: '.*' # Regex
-        schedule: # same options as in SchedulerServiceTaskScheduleDefinition
-          # supports cron, ISO duration, "human duration" as used in code
+        schedule:
           frequency: { minutes: 30 }
-          # supports ISO duration, "human duration" as used in code
           timeout: { minutes: 3 }
+    # Uncomment when GITLAB_TOKEN is set in .env
+    # gitlab:
+    #   selfHosted:
+    #     host: gitlab.com
+    #     orgEnabled: false
+    #     catalogPath: '/catalog-info.yaml'
+    #     schedule:
+    #       frequency: { minutes: 30 }
+    #       timeout: { minutes: 3 }
 
 # see https://backstage.io/docs/features/kubernetes/configuration for kubernetes configuration options
 kubernetes:

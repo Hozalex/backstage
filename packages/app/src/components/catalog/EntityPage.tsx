@@ -58,6 +58,16 @@ import {
   isKubernetesAvailable,
 } from '@backstage/plugin-kubernetes';
 
+import {
+  EntityGitlabContent,
+  EntityGitlabLanguageCard,
+  EntityGitlabMergeRequestsTable,
+  EntityGitlabPeopleCard,
+  EntityGitlabPipelinesTable,
+  EntityGitlabReleasesCard,
+  isGitlabAvailable,
+} from '@immobiliarelabs/backstage-plugin-gitlab';
+
 const techdocsContent = (
   <EntityTechdocsContent>
     <TechDocsAddons>
@@ -67,21 +77,15 @@ const techdocsContent = (
 );
 
 const cicdContent = (
-  // This is an example of how you can implement your company's logic in entity page.
-  // You can for example enforce that all components of type 'service' should use GitHubActions
   <EntitySwitch>
-    {/*
-      Here you can add support for different CI/CD services, for example
-      using @backstage-community/plugin-github-actions as follows:
-      <EntitySwitch.Case if={isGithubActionsAvailable}>
-        <EntityGithubActionsContent />
-      </EntitySwitch.Case>
-     */}
+    <EntitySwitch.Case if={isGitlabAvailable}>
+      <EntityGitlabContent />
+    </EntitySwitch.Case>
     <EntitySwitch.Case>
       <EmptyState
         title="No CI/CD available for this entity"
         missing="info"
-        description="You need to add an annotation to your component if you want to enable CI/CD for it. You can read more about annotations in Backstage by clicking the button below."
+        description="Add a 'gitlab.com/project-id' annotation to your component to enable GitLab CI/CD integration."
         action={
           <Button
             variant="contained"
@@ -94,6 +98,26 @@ const cicdContent = (
       />
     </EntitySwitch.Case>
   </EntitySwitch>
+);
+
+const gitlabOverviewContent = (
+  <Grid container spacing={3}>
+    <Grid item md={6}>
+      <EntityGitlabPeopleCard />
+    </Grid>
+    <Grid item md={6}>
+      <EntityGitlabLanguageCard />
+    </Grid>
+    <Grid item md={6}>
+      <EntityGitlabReleasesCard />
+    </Grid>
+    <Grid item md={12}>
+      <EntityGitlabMergeRequestsTable />
+    </Grid>
+    <Grid item md={12}>
+      <EntityGitlabPipelinesTable />
+    </Grid>
+  </Grid>
 );
 
 const entityWarningContent = (
@@ -153,6 +177,10 @@ const serviceEntityPage = (
       {cicdContent}
     </EntityLayout.Route>
 
+    <EntityLayout.Route path="/gitlab" title="GitLab" if={isGitlabAvailable}>
+      {gitlabOverviewContent}
+    </EntityLayout.Route>
+
     <EntityLayout.Route
       path="/kubernetes"
       title="Kubernetes"
@@ -197,6 +225,10 @@ const websiteEntityPage = (
 
     <EntityLayout.Route path="/ci-cd" title="CI/CD">
       {cicdContent}
+    </EntityLayout.Route>
+
+    <EntityLayout.Route path="/gitlab" title="GitLab" if={isGitlabAvailable}>
+      {gitlabOverviewContent}
     </EntityLayout.Route>
 
     <EntityLayout.Route
