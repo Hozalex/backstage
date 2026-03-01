@@ -117,24 +117,14 @@ catalog:
     #       frequency: { minutes: 30 }
     #       timeout: { minutes: 3 }
 
-# see https://backstage.io/docs/features/kubernetes/configuration for kubernetes configuration options
-kubernetes:
-  frontend:
-    podDelete:
-      enabled: true
-  serviceLocatorMethod:
-    type: 'multiTenant'
-  clusterLocatorMethods:
+# ArgoCD plugin configuration
+# Annotate entities with: argocd/app-name, argocd/project-name, argocd/instance-name
+argocd:
+  username: ${ARGOCD_USERNAME}
+  password: ${ARGOCD_PASSWORD}
+  appLocatorMethods:
     - type: 'config'
-      clusters:
-        - url: ${K8S_HOST}
-          name:  ${K8S_NAME}
-          authProvider: 'serviceAccount'
-          skipTLSVerify: true
-          skipMetricsLookup: true
-          serviceAccountToken: ${K8S_TOKEN}
-          # caFile: '' # local path to CA file
-          # customResources:
-          #   - group: 'argoproj.io'
-          #     apiVersion: 'v1alpha1'
-          #     plural: 'rollouts'
+      instances:
+        - name: argocd
+          url: ${ARGOCD_URL}
+          token: ${ARGOCD_AUTH_TOKEN}

@@ -54,9 +54,10 @@ import { TechDocsAddons } from '@backstage/plugin-techdocs-react';
 import { ReportIssue } from '@backstage/plugin-techdocs-module-addons-contrib';
 
 import {
-  EntityKubernetesContent,
-  isKubernetesAvailable,
-} from '@backstage/plugin-kubernetes';
+  EntityArgoCDOverviewCard,
+  EntityArgoCDHistoryCard,
+  isArgocdAvailable,
+} from '@roadiehq/backstage-plugin-argo-cd';
 
 import {
   EntityGitlabContent,
@@ -182,11 +183,18 @@ const serviceEntityPage = (
     </EntityLayout.Route>
 
     <EntityLayout.Route
-      path="/kubernetes"
-      title="Kubernetes"
-      if={isKubernetesAvailable}
+      path="/argocd"
+      title="ArgoCD"
+      if={isArgocdAvailable}
     >
-      <EntityKubernetesContent refreshIntervalMs={30000}/>
+      <Grid container spacing={3}>
+        <Grid item xs={12}>
+          <EntityArgoCDOverviewCard />
+        </Grid>
+        <Grid item xs={12}>
+          <EntityArgoCDHistoryCard />
+        </Grid>
+      </Grid>
     </EntityLayout.Route>
 
     <EntityLayout.Route path="/api" title="API">
@@ -232,11 +240,18 @@ const websiteEntityPage = (
     </EntityLayout.Route>
 
     <EntityLayout.Route
-      path="/kubernetes"
-      title="Kubernetes"
-      if={isKubernetesAvailable}
+      path="/argocd"
+      title="ArgoCD"
+      if={isArgocdAvailable}
     >
-      <EntityKubernetesContent />
+      <Grid container spacing={3}>
+        <Grid item xs={12}>
+          <EntityArgoCDOverviewCard />
+        </Grid>
+        <Grid item xs={12}>
+          <EntityArgoCDHistoryCard />
+        </Grid>
+      </Grid>
     </EntityLayout.Route>
 
     <EntityLayout.Route path="/dependencies" title="Dependencies">
