@@ -1,0 +1,14 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ${{ values.serviceName }}
+  description: ${{ values.description if values.description else values.serviceName }}
+  annotations:
+    argocd/app-name: ${{ values.argoAppName }}
+    argocd/instance-name: argocd
+    gitlab.com/project-slug: ${{ values.serviceRepoUrl | replace("https://gitlab.com/", "") }}
+spec:
+  type: service
+  lifecycle: development
+  owner: group:default/ops
+  system: ${{ values.namespace }}

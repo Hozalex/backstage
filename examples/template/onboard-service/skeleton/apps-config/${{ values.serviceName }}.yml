@@ -1,0 +1,60 @@
+image:
+  repository: ${{ values.imageRepository }}
+  tag: "${{ values.imageTag }}"
+
+nameOverride: "${{ values.serviceName }}"
+
+podAnnotations:
+  reloader.stakater.com/auto: "true"
+
+podLabels:
+  prometheus.io/scrape: "true"
+
+service:
+  enabled: true
+  ports:
+    - name: http
+      protocol: TCP
+      port: ${{ values.port }}
+
+resources:
+  limits:
+    memory: ${{ values.memoryLimit }}
+  requests:
+    cpu: ${{ values.cpuRequest }}
+    memory: ${{ values.memoryRequest }}
+
+{% if values.enableHPA %}
+autoscaling:
+  enabled: true
+  minReplicas: ${{ values.minReplicas }}
+  maxReplicas: ${{ values.maxReplicas }}
+  targetCPUUtilizationPercentage: 80
+{% else %}
+autoscaling:
+  enabled: false
+{% endif %}
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - ${{ values.serviceName }}-dev
+          topologyKey: kubernetes.io/hostname
+
+# env:
+#   - name: EXAMPLE_SECRET
+#     valueFrom:
+#       secretKeyRef:
+#         key: EXAMPLE_KEY
+#         name: ${{ values.namespace }}-secrets
+
+# configMap:
+#   SERVER_PORT: '"${{ values.port }}"'
+#   TZ: Asia/Tashkent

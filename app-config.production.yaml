@@ -89,6 +89,12 @@ catalog:
       rules:
         - allow: [Template]
 
+    # Onboard service to ArgoCD dev cluster
+    - type: file
+      target: ./examples/template/onboard-service/template.yaml
+      rules:
+        - allow: [Template]
+
     # Local example organizational data
     - type: file
       target: ./examples/org.yaml

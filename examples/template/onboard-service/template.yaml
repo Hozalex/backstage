@@ -1,0 +1,171 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: onboard-service-to-argocd
+  title: Onboard Service to Dev Cluster
+  description: Adds a service to the dev k8s cluster by creating a values file in the GitOps repo. ArgoCD picks it up automatically.
+  tags:
+    - gitlab
+    - argocd
+    - gitops
+spec:
+  owner: group:default/ops
+  type: service
+
+  parameters:
+    - title: Service Info
+      required:
+        - serviceName
+        - namespace
+        - serviceRepoUrl
+        - imageRepository
+        - port
+      properties:
+        serviceName:
+          title: Service Name
+          type: string
+          description: "Lowercase, hyphen-separated, e.g. ms-service-api"
+          pattern: '^[a-z][a-z0-9-]+$'
+          ui:autofocus: true
+        description:
+          title: Description
+          type: string
+          description: "Short description of the service"
+          default: ""
+        serviceRepoUrl:
+          title: Service Repo (GitLab)
+          type: string
+          ui:field: RepoUrlPicker
+          ui:options:
+            allowedHosts:
+              - gitlab.com
+          description: "Existing service code repo — catalog-info.yaml will be pushed here"
+        namespace:
+          title: Namespace
+          type: string
+          description: "Target namespace in the cluster"
+        imageRepository:
+          title: Image Repository
+          type: string
+          description: "Full image path"
+        imageTag:
+          title: Image Tag
+          type: string
+          description: "Docker image tag, e.g. dev-abc1234"
+          default: "dev-latest"
+        port:
+          title: Container Port
+          type: integer
+          default: 8080
+
+    - title: Resources & Scaling
+      properties:
+        cpuRequest:
+          title: CPU Request
+          type: string
+          default: "50m"
+        memoryRequest:
+          title: Memory Request
+          type: string
+          default: "96Mi"
+        memoryLimit:
+          title: Memory Limit
+          type: string
+          default: "256Mi"
+        enableHPA:
+          title: Enable Autoscaling (HPA)
+          type: boolean
+          default: false
+        minReplicas:
+          title: Min Replicas
+          type: integer
+          default: 1
+          ui:widget: hidden
+        maxReplicas:
+          title: Max Replicas
+          type: integer
+          default: 3
+          ui:widget: hidden
+
+    - title: Infrastructure
+      required:
+        - gitopsRepoUrl
+        - argocdBaseUrl
+      properties:
+        gitopsRepoUrl:
+          title: GitOps Repo (GitLab)
+          type: string
+          ui:field: RepoUrlPicker
+          ui:options:
+            allowedHosts:
+              - gitlab.com
+          description: "Repo with ArgoCD values — values file will be pushed here"
+        gitopsBasePath:
+          title: GitOps Base Path
+          type: string
+          description: "Path inside the GitOps repo where configs live"
+        argocdBaseUrl:
+          title: ArgoCD URL
+          type: string
+          description: "Base URL of ArgoCD, e.g. https://argocd.example.com"
+        argoAppSuffix:
+          title: ArgoCD App Name Suffix
+          type: string
+          description: "Suffix appended to service name to form the ArgoCD app name"
+
+  steps:
+    - id: fetch
+      name: Render templates
+      action: fetch:template
+      input:
+        url: ./skeleton
+        values:
+          serviceName: ${{ parameters.serviceName }}
+          namespace: ${{ parameters.namespace }}
+          imageRepository: ${{ parameters.imageRepository }}
+          imageTag: ${{ parameters.imageTag }}
+          port: ${{ parameters.port }}
+          description: ${{ parameters.description }}
+          cpuRequest: ${{ parameters.cpuRequest }}
+          memoryRequest: ${{ parameters.memoryRequest }}
+          memoryLimit: ${{ parameters.memoryLimit }}
+          enableHPA: ${{ parameters.enableHPA }}
+          minReplicas: ${{ parameters.minReplicas }}
+          maxReplicas: ${{ parameters.maxReplicas }}
+          argoAppName: "${{ parameters.serviceName }}${{ parameters.argoAppSuffix }}"
+          serviceRepoUrl: ${{ parameters.serviceRepoUrl }}
+
+    - id: push-values
+      name: Push values to GitOps repo
+      action: gitlab:repo:push
+      input:
+        repoUrl: ${{ parameters.gitopsRepoUrl }}
+        branchName: main
+        commitMessage: "feat: onboard ${{ parameters.serviceName }} to ${{ parameters.namespace }}-dev"
+        sourcePath: apps-config
+        targetPath: "${{ parameters.gitopsBasePath }}/${{ parameters.namespace }}"
+
+    - id: push-catalog
+      name: Push catalog-info.yaml to service repo
+      action: gitlab:repo:push
+      input:
+        repoUrl: ${{ parameters.serviceRepoUrl }}
+        branchName: main
+        commitMessage: "chore: add backstage catalog-info.yaml"
+        sourcePath: catalog
+
+    - id: register
+      name: Register in Backstage catalog
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps['push-catalog'].output.repoContentsUrl }}
+        catalogInfoPath: "/catalog-info.yaml"
+
+  output:
+    links:
+      - title: ArgoCD Application
+        icon: dashboard
+        url: "${{ parameters.argocdBaseUrl }}/applications/${{ parameters.serviceName }}${{ parameters.argoAppSuffix }}"
+      - title: Open in Catalog
+        icon: catalog
+        entityRef: ${{ steps['register'].output.entityRef }}
