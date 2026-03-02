@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${{ values.serviceName }}
+  namespace: ${{ values.namespace }}
+  labels:
+    app: ${{ values.serviceName }}
+    backstage.io/kubernetes-id: ${{ values.serviceName }}
+spec:
+  replicas: ${{ values.replicas }}
+  selector:
+    matchLabels:
+      app: ${{ values.serviceName }}
+  template:
+    metadata:
+      labels:
+        app: ${{ values.serviceName }}
+        backstage.io/kubernetes-id: ${{ values.serviceName }}
+    spec:
+      {% if values.imagePullSecret %}
+      imagePullSecrets:
+        - name: ${{ values.imagePullSecret }}
+      {% endif %}
+      containers:
+        - name: ${{ values.serviceName }}
+          image: ${{ values.imageRepository }}:${{ values.imageTag }}
+          imagePullPolicy: Always
+          ports:
+            - containerPort: ${{ values.port }}
+          resources:
+            requests:
+              cpu: ${{ values.cpuRequest }}
+              memory: ${{ values.memoryRequest }}
+            limits:
+              memory: ${{ values.memoryLimit }}

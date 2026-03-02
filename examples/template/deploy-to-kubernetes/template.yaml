@@ -1,0 +1,135 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: deploy-to-kubernetes
+  title: Deploy Service to Kubernetes
+  description: Adds Kubernetes manifests and a Backstage catalog entry to an existing service repo.
+  tags:
+    - github
+    - kubernetes
+    - gitops
+spec:
+  owner: group:default/admins
+  type: service
+
+  parameters:
+    - title: Service Info
+      required:
+        - serviceName
+        - serviceRepoUrl
+        - port
+      properties:
+        serviceName:
+          title: Service Name
+          type: string
+          description: "Lowercase, hyphen-separated, e.g. sample-app"
+          pattern: '^[a-z][a-z0-9-]+$'
+          ui:autofocus: true
+        description:
+          title: Description
+          type: string
+          description: "Short description of the service"
+          default: ""
+        serviceRepoUrl:
+          title: Service Repo (GitHub)
+          type: string
+          ui:field: RepoUrlPicker
+          ui:options:
+            allowedHosts:
+              - github.com
+          description: "Existing service repo — k8s manifests and catalog-info.yaml will be pushed here"
+        port:
+          title: Container Port
+          type: integer
+          default: 8080
+        owner:
+          title: Owner
+          type: string
+          description: "Backstage group or user that owns this service"
+          default: "group:default/developers"
+
+    - title: Kubernetes
+      required:
+        - imageRepository
+        - namespace
+      properties:
+        imageRepository:
+          title: Image Repository
+          type: string
+          description: "Full image path, e.g. ghcr.io/org/sample-app"
+        imageTag:
+          title: Image Tag
+          type: string
+          description: "Docker image tag, e.g. latest or v1.0.0"
+          default: "latest"
+        namespace:
+          title: Namespace
+          type: string
+          description: "Kubernetes namespace to deploy into"
+          default: "default"
+        replicas:
+          title: Replicas
+          type: integer
+          default: 1
+        imagePullSecret:
+          title: Image Pull Secret
+          type: string
+          description: "Name of the k8s secret for private registry (leave empty if not needed)"
+          default: ""
+        cpuRequest:
+          title: CPU Request
+          type: string
+          default: "50m"
+        memoryRequest:
+          title: Memory Request
+          type: string
+          default: "64Mi"
+        memoryLimit:
+          title: Memory Limit
+          type: string
+          default: "128Mi"
+
+  steps:
+    - id: fetch
+      name: Render templates
+      action: fetch:template
+      input:
+        url: ./skeleton
+        values:
+          serviceName: ${{ parameters.serviceName }}
+          description: ${{ parameters.description }}
+          port: ${{ parameters.port }}
+          owner: ${{ parameters.owner }}
+          imageRepository: ${{ parameters.imageRepository }}
+          imageTag: ${{ parameters.imageTag }}
+          namespace: ${{ parameters.namespace }}
+          replicas: ${{ parameters.replicas }}
+          imagePullSecret: ${{ parameters.imagePullSecret }}
+          cpuRequest: ${{ parameters.cpuRequest }}
+          memoryRequest: ${{ parameters.memoryRequest }}
+          memoryLimit: ${{ parameters.memoryLimit }}
+          serviceRepoUrl: ${{ parameters.serviceRepoUrl }}
+
+    - id: push
+      name: Push to service repo
+      action: github:repo:push
+      input:
+        repoUrl: ${{ parameters.serviceRepoUrl }}
+        branchName: main
+        commitMessage: "chore: add k8s manifests and backstage catalog-info"
+
+    - id: register
+      name: Register in Backstage catalog
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps['push'].output.repoContentsUrl }}
+        catalogInfoPath: "/catalog-info.yaml"
+
+  output:
+    links:
+      - title: Open in Catalog
+        icon: catalog
+        entityRef: ${{ steps['register'].output.entityRef }}
+      - title: Service Repo
+        icon: github
+        url: ${{ steps['push'].output.remoteUrl }}

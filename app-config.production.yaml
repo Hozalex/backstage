@@ -76,24 +76,17 @@ catalog:
   rules:
     - allow: [Component, System, API, Resource, Location, Template, User, Group]
   locations:
-    # Local example data, replace this with your production config, these are intended for demo use only.
-    # File locations are relative to the backend process, typically in a deployed context, such as in a Docker container, this will be the root
-    - type: file
-      target: ./examples/entities.yaml
-      rules:
-        - allow: [Component, System, API]
-
-    # Local example template
-    - type: file
-      target: ./examples/template/template.yaml
-      rules:
-        - allow: [Template]
-
-    # Local example organizational data
+    # Users and groups
     - type: file
       target: ./examples/org.yaml
       rules:
         - allow: [User, Group]
+
+    # Deploy service to Kubernetes
+    - type: file
+      target: ./examples/template/deploy-to-kubernetes/template.yaml
+      rules:
+        - allow: [Template]
 
   providers:
     github:
