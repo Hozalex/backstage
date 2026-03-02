@@ -9,7 +9,7 @@ metadata:
     - argocd
     - gitops
 spec:
-  owner: group:default/ops
+  owner: group:default/admins
   type: service
 
   parameters:

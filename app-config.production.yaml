@@ -126,8 +126,6 @@ catalog:
 # ArgoCD plugin configuration
 # Annotate entities with: argocd/app-name, argocd/project-name, argocd/instance-name
 argocd:
-  username: ${ARGOCD_USERNAME}
-  password: ${ARGOCD_PASSWORD}
   appLocatorMethods:
     - type: 'config'
       instances:
