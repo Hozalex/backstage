@@ -1,0 +1,147 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: register-service
+  title: Register Existing Service
+  description: Adds a minimal catalog-info.yaml (optionally with a docs skeleton and an API) to an existing GitHub repo via pull request, so the service shows up in the catalog.
+  tags:
+    - github
+    - catalog
+spec:
+  owner: group:default/admins
+  type: service
+
+  parameters:
+    - title: Service
+      required:
+        - repoUrl
+        - description
+        - owner
+      properties:
+        repoUrl:
+          title: Service Repo (GitHub)
+          type: string
+          ui:field: RepoUrlPicker
+          ui:options:
+            allowedHosts:
+              - github.com
+          description: "Existing repo — catalog-info.yaml will be added to it. The repo name becomes the service name."
+        description:
+          title: Description
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: "Short description of what the service does"
+        owner:
+          title: Owner
+          type: string
+          ui:field: OwnerPicker
+          ui:options:
+            catalogFilter:
+              kind: Group
+            allowArbitraryValues: false
+          description: "Group that owns this service"
+        type:
+          title: Type
+          type: string
+          enum: [service, website, library]
+          default: service
+        lifecycle:
+          title: Lifecycle
+          type: string
+          enum: [experimental, production, deprecated]
+          default: production
+        tags:
+          title: Tags
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            pattern: '^[a-z0-9+#]+(-[a-z0-9+#]+)*$'
+            maxLength: 63
+          description: "Optional. Lowercase letters, digits, + and #, separated by hyphens — e.g. go, backend, payments-api"
+
+    - title: Documentation and API
+      properties:
+        addDocs:
+          title: Generate documentation skeleton
+          type: boolean
+          default: true
+          description: "Adds mkdocs.yml and docs/index.md for TechDocs. Turn off if the repo already has them — existing files with these names would be overwritten."
+        addApi:
+          title: Register an API for this service
+          type: boolean
+          default: false
+          description: "Adds an API entity provided by the service. The definition file must already exist in the repo."
+      dependencies:
+        addApi:
+          oneOf:
+            - properties:
+                addApi:
+                  const: false
+            - required:
+                - apiType
+                - apiDefinitionPath
+              properties:
+                addApi:
+                  const: true
+                apiType:
+                  title: API Type
+                  type: string
+                  enum: [openapi, asyncapi, graphql, grpc]
+                  default: openapi
+                apiDefinitionPath:
+                  title: Definition File
+                  type: string
+                  default: openapi.yaml
+                  pattern: '^[A-Za-z0-9_][A-Za-z0-9_./-]*$'
+                  description: "Path to the API definition relative to the repo root, e.g. openapi.yaml or api/schema.graphql"
+
+  steps:
+    - id: fetch
+      name: Render catalog-info.yaml
+      action: fetch:template
+      input:
+        url: ./skeleton
+        values:
+          name: ${{ (parameters.repoUrl | parseRepoUrl).repo }}
+          owner_repo: ${{ (parameters.repoUrl | parseRepoUrl).owner }}/${{ (parameters.repoUrl | parseRepoUrl).repo }}
+          description: ${{ parameters.description }}
+          tags: ${{ parameters.tags }}
+          owner: ${{ parameters.owner }}
+          type: ${{ parameters.type }}
+          lifecycle: ${{ parameters.lifecycle }}
+          addDocs: ${{ parameters.addDocs }}
+          addApi: ${{ parameters.addApi }}
+          apiType: ${{ parameters.apiType }}
+          apiDefinitionPath: ${{ parameters.apiDefinitionPath }}
+
+    - id: fetchDocs
+      name: Render documentation skeleton
+      if: ${{ parameters.addDocs }}
+      action: fetch:template
+      input:
+        url: ./skeleton-docs
+        values:
+          description: ${{ parameters.description }}
+          name: ${{ (parameters.repoUrl | parseRepoUrl).repo }}
+          owner_repo: ${{ (parameters.repoUrl | parseRepoUrl).owner }}/${{ (parameters.repoUrl | parseRepoUrl).repo }}
+          owner: ${{ parameters.owner }}
+          type: ${{ parameters.type }}
+          lifecycle: ${{ parameters.lifecycle }}
+
+    - id: pr
+      name: Open pull request
+      action: publish:github:pull-request
+      input:
+        repoUrl: ${{ parameters.repoUrl }}
+        branchName: backstage/add-catalog-info
+        title: "chore: add Backstage catalog-info.yaml"
+        description: "Registers this service in the Backstage catalog. After merge it appears on the portal on the next discovery run."
+        commitMessage: "chore: add Backstage catalog-info.yaml"
+
+  output:
+    links:
+      - title: Pull Request
+        icon: github
+        url: ${{ steps['pr'].output.remoteUrl }}

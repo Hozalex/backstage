@@ -1,0 +1,32 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ${{ values.name }}
+  description: ${{ values.description | dump }}
+  annotations:
+    github.com/project-slug: ${{ values.owner_repo }}
+{%- if values.addDocs %}
+    backstage.io/techdocs-ref: dir:.
+{%- endif %}
+{%- if values.tags and values.tags.length %}
+  tags: ${{ values.tags | dump }}
+{%- endif %}
+spec:
+  type: ${{ values.type }}
+  lifecycle: ${{ values.lifecycle }}
+  owner: ${{ values.owner }}
+{%- if values.addApi %}
+  providesApis:
+    - ${{ values.name }}-api
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: ${{ values.name }}-api
+spec:
+  type: ${{ values.apiType }}
+  lifecycle: ${{ values.lifecycle }}
+  owner: ${{ values.owner }}
+  definition:
+    $text: ./${{ values.apiDefinitionPath }}
+{%- endif %}
