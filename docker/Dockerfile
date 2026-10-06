@@ -1,5 +1,5 @@
 # Stage 1 - Create yarn install skeleton layer
-FROM node:22-bookworm-slim AS packages
+FROM node:24-trixie-slim AS packages
 
 WORKDIR /app
 COPY backstage.json package.json yarn.lock ./
@@ -14,13 +14,13 @@ COPY plugins plugins
 RUN find packages \! -name "package.json" -mindepth 2 -maxdepth 2 -exec rm -rf {} \+
 
 # Stage 2 - Install dependencies and build packages
-FROM node:22-bookworm-slim AS build
+FROM node:24-trixie-slim AS build
 
 # Set Python interpreter for `node-gyp` to use
 ENV PYTHON=/usr/bin/python3
 
 # Install native module build dependencies.
-# Note: isolated-vm@6.x requires Node.js 22+ (V8 v12.x) for v8::SourceLocation API.
+# Note: tree-sitter (pulled in by @backstage/plugin-api-docs) has no prebuilt binaries and is compiled here.
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && \
@@ -32,12 +32,9 @@ WORKDIR /app
 
 COPY --from=packages --chown=node:node /app .
 
-USER root
+RUN --mount=type=cache,target=/home/node/.cache/yarn,sharing=locked,uid=1000,gid=1000 \
+    yarn install --immutable
 
-# RUN --mount=type=cache,target=/home/node/.cache/yarn,sharing=locked,uid=1000,gid=1000 \
-RUN    yarn install --immutable
-
-USER node
 COPY --chown=node:node . .
 
 RUN yarn tsc
@@ -48,20 +45,17 @@ RUN mkdir packages/backend/dist/skeleton packages/backend/dist/bundle \
     && tar xzf packages/backend/dist/bundle.tar.gz -C packages/backend/dist/bundle
 
 # Stage 3 - Build the actual backend image and install production dependencies
-FROM node:22-bookworm-slim
+FROM node:24-trixie-slim
 
-# Set Python interpreter for `node-gyp` to use
-ENV PYTHON=/usr/bin/python3
-
-# Install native module dependencies for production.
+# Install sqlite3 dependencies, plus Python for TechDocs local generation.
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && \
-    apt-get install -y --no-install-recommends python3 g++ build-essential libsqlite3-dev curl python3-pip && \
+    apt-get install -y --no-install-recommends libsqlite3-dev curl python3 python3-pip && \
     rm -rf /var/lib/apt/lists/*
 
 # Install mkdocs for TechDocs local generation
-RUN pip3 install mkdocs-techdocs-core==1.6.1 --break-system-packages
+RUN pip3 install mkdocs-techdocs-core==1.7.1 --break-system-packages
 
 # From here on we use the least-privileged `node` user to run the backend.
 USER node
@@ -90,7 +84,10 @@ RUN --mount=type=cache,target=/home/node/.cache/yarn,sharing=locked,uid=1000,gid
 COPY --from=build --chown=node:node /app/packages/backend/dist/bundle/ ./
 
 # Copy any other files that we need at runtime
-COPY --chown=node:node app-config.yaml ./
+COPY --chown=node:node app-config*.yaml ./
+
+# Catalog locations in app-config.production.yaml point at ./examples
+COPY --chown=node:node examples ./examples
 
 # This switches many Node.js dependencies to production mode.
 ENV NODE_ENV=production

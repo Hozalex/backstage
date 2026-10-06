@@ -1,6 +1,7 @@
 app:
   # Should be the same as backend.baseUrl when using the `app-backend` plugin.
   baseUrl: http://localhost:7007
+  title: Scaffolded Backstage App
 
 # Uncomment when GITLAB_TOKEN is set in .env
 # proxy:
@@ -85,6 +86,12 @@ catalog:
     # Deploy service to Kubernetes
     - type: file
       target: ./examples/template/deploy-to-kubernetes/template.yaml
+      rules:
+        - allow: [Template]
+
+    # Register existing service (adds catalog-info.yaml via pull request)
+    - type: file
+      target: ./examples/template/register-service/template.yaml
       rules:
         - allow: [Template]
 

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "engines": {
-    "node": "20 || 22"
+    "node": "22 || 24"
   },
   "scripts": {
     "start": "backstage-cli repo start",
@@ -29,17 +29,22 @@
     ]
   },
   "devDependencies": {
-    "@backstage/cli": "^0.35.4",
+    "@backstage/cli": "^0.36.6",
+    "@backstage/cli-defaults": "^0.1.6",
     "@backstage/e2e-test-utils": "^0.1.2",
+    "@jest/environment-jsdom-abstract": "~30.2.0",
     "@playwright/test": "^1.32.3",
-    "@types/jest": "^29.0.0",
+    "@types/jest": "^30.0.0",
+    "jest": "~30.2.0",
+    "jsdom": "^27.1.0",
     "node-gyp": "^10.0.0",
     "prettier": "^2.3.2",
     "typescript": "~5.8.0"
   },
   "resolutions": {
     "@types/react": "^18",
-    "@types/react-dom": "^18"
+    "@types/react-dom": "^18",
+    "@yarnpkg/core": "4.9.1"
   },
   "prettier": "@backstage/cli/config/prettier",
   "lint-staged": {
@@ -51,5 +56,5 @@
       "prettier --write"
     ]
   },
-  "packageManager": "yarn@4.4.1"
+  "packageManager": "yarn@4.13.0"
 }

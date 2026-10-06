@@ -6,11 +6,11 @@ This is a **Backstage developer portal** - an open-source platform by Spotify fo
 
 ## Technology Stack
 
-- **Runtime:** Node.js (v20 or v22)
+- **Runtime:** Node.js (v22 or v24)
 - **Language:** TypeScript 5.8
 - **Frontend:** React 18 + Material-UI v4
 - **Backend:** Express.js (via Backstage backend-defaults)
-- **Package Manager:** Yarn 4.4.1 (monorepo workspaces)
+- **Package Manager:** Yarn 4.13.0 (monorepo workspaces)
 - **Database:** SQLite3 (dev) / PostgreSQL 17 (prod)
 - **Testing:** Jest + Playwright
 - **Containerization:** Docker + Docker Compose
@@ -77,7 +77,7 @@ yarn new              # Create new package/plugin
 - **kubernetes** - K8s cluster integration
 - **org** - Organization management
 - **home** - Customizable home page
-- **tech-radar** - Technology radar visualization
+- **github-actions** (community) - GitHub Actions runs on the entity CI/CD tab
 
 ## Frontend Routes
 
@@ -86,7 +86,6 @@ yarn new              # Create new package/plugin
 | `/` | Home page |
 | `/catalog` | Software catalog |
 | `/catalog/:namespace/:kind/:name` | Entity detail page |
-| `/tech-radar` | Technology radar |
 | `/docs` | TechDocs browser |
 | `/create` | Software scaffolder |
 | `/api-docs` | API documentation |

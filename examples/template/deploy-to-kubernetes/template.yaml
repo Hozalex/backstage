@@ -3,7 +3,7 @@ kind: Template
 metadata:
   name: deploy-to-kubernetes
   title: Deploy Service to Kubernetes
-  description: Adds Kubernetes manifests and a Backstage catalog entry to an existing service repo.
+  description: Opens a pull request with Kubernetes manifests for a service that is already registered in the catalog.
   tags:
     - github
     - kubernetes
@@ -13,40 +13,26 @@ spec:
   type: service
 
   parameters:
-    - title: Service Info
+    - title: Service
       required:
-        - serviceName
-        - serviceRepoUrl
+        - entity
         - port
       properties:
-        serviceName:
-          title: Service Name
+        entity:
+          title: Service
           type: string
-          description: "Lowercase, hyphen-separated, e.g. sample-app"
-          pattern: '^[a-z][a-z0-9-]+$'
-          ui:autofocus: true
-        description:
-          title: Description
-          type: string
-          description: "Short description of the service"
-          default: ""
-        serviceRepoUrl:
-          title: Service Repo (GitHub)
-          type: string
-          ui:field: RepoUrlPicker
+          ui:field: EntityPicker
           ui:options:
-            allowedHosts:
-              - github.com
-          description: "Existing service repo — k8s manifests and catalog-info.yaml will be pushed here"
+            catalogFilter:
+              - kind: Component
+            defaultKind: Component
+            allowArbitraryValues: false
+          description: "Service already registered in the catalog. To add a new one, use the Register Existing Service template first."
+          ui:autofocus: true
         port:
           title: Container Port
           type: integer
           default: 8080
-        owner:
-          title: Owner
-          type: string
-          description: "Backstage group or user that owns this service"
-          default: "group:default/developers"
 
     - title: Kubernetes
       required:
@@ -90,16 +76,26 @@ spec:
           default: "128Mi"
 
   steps:
+    - id: entity
+      name: Load service from catalog
+      action: catalog:fetch
+      input:
+        entityRef: ${{ parameters.entity }}
+
     - id: fetch
       name: Render templates
       action: fetch:template
       input:
         url: ./skeleton
         values:
-          serviceName: ${{ parameters.serviceName }}
-          description: ${{ parameters.description }}
+          serviceName: ${{ steps['entity'].output.entity.metadata.name }}
+          description: ${{ steps['entity'].output.entity.metadata.description }}
+          owner: ${{ steps['entity'].output.entity.spec.owner }}
+          type: ${{ steps['entity'].output.entity.spec.type }}
+          lifecycle: ${{ steps['entity'].output.entity.spec.lifecycle }}
+          techdocsRef: ${{ steps['entity'].output.entity.metadata.annotations['backstage.io/techdocs-ref'] }}
+          repoSlug: ${{ (steps['entity'].output.entity.metadata.annotations['backstage.io/source-location'] | replace('url:https://github.com/', '')).split('/')[0] }}/${{ (steps['entity'].output.entity.metadata.annotations['backstage.io/source-location'] | replace('url:https://github.com/', '')).split('/')[1] }}
           port: ${{ parameters.port }}
-          owner: ${{ parameters.owner }}
           imageRepository: ${{ parameters.imageRepository }}
           imageTag: ${{ parameters.imageTag }}
           namespace: ${{ parameters.namespace }}
@@ -108,28 +104,22 @@ spec:
           cpuRequest: ${{ parameters.cpuRequest }}
           memoryRequest: ${{ parameters.memoryRequest }}
           memoryLimit: ${{ parameters.memoryLimit }}
-          serviceRepoUrl: ${{ parameters.serviceRepoUrl }}
 
-    - id: push
-      name: Push to service repo
-      action: github:repo:push
+    - id: pr
+      name: Open pull request
+      action: publish:github:pull-request
       input:
-        repoUrl: ${{ parameters.serviceRepoUrl }}
-        branchName: main
-        commitMessage: "chore: add k8s manifests and backstage catalog-info"
-
-    - id: register
-      name: Register in Backstage catalog
-      action: catalog:register
-      input:
-        repoContentsUrl: ${{ steps['push'].output.repoContentsUrl }}
-        catalogInfoPath: "/catalog-info.yaml"
+        repoUrl: github.com?owner=${{ (steps['entity'].output.entity.metadata.annotations['backstage.io/source-location'] | replace('url:https://github.com/', '')).split('/')[0] }}&repo=${{ (steps['entity'].output.entity.metadata.annotations['backstage.io/source-location'] | replace('url:https://github.com/', '')).split('/')[1] }}
+        branchName: backstage/deploy-to-kubernetes
+        title: "chore: add k8s manifests and update catalog-info"
+        description: "Adds Kubernetes manifests under k8s/ and rewrites catalog-info.yaml with Kubernetes annotations. Review the catalog-info.yaml diff: anything not carried over (extra entities, tags, links) must be restored by hand."
+        commitMessage: "chore: add k8s manifests and update catalog-info"
 
   output:
     links:
+      - title: Pull Request
+        icon: github
+        url: ${{ steps['pr'].output.remoteUrl }}
       - title: Open in Catalog
         icon: catalog
-        entityRef: ${{ steps['register'].output.entityRef }}
-      - title: Service Repo
-        icon: github
-        url: ${{ steps['push'].output.remoteUrl }}
+        entityRef: ${{ parameters.entity }}

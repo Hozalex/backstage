@@ -5,3 +5,10 @@ packages/*/node_modules
 plugins/*/dist
 plugins/*/node_modules
 *.local.yaml
+.git
+.env
+.claude
+.yarn/cache
+.yarn/install-state.gz
+docker/postgresql
+e2e-test-report

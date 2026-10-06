@@ -4,14 +4,43 @@ metadata:
   name: backstage
   namespace: default
 ---
+# Long-lived token for the service account; must live in the same namespace
 apiVersion: v1
 kind: Secret
 metadata:
   name: backstage-token
-  namespace: kube-system
+  namespace: default
   annotations:
     kubernetes.io/service-account.name: backstage
 type: kubernetes.io/service-account-token
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: backstage-read-only
+rules:
+  - apiGroups: ['']
+    resources: [pods, pods/log, configmaps, services, limitranges, resourcequotas]
+    verbs: [get, list, watch]
+  - apiGroups: [apps]
+    resources: [deployments, replicasets, statefulsets, daemonsets]
+    verbs: [get, list, watch]
+  - apiGroups: [batch]
+    resources: [jobs, cronjobs]
+    verbs: [get, list, watch]
+  - apiGroups: [autoscaling]
+    resources: [horizontalpodautoscalers]
+    verbs: [get, list, watch]
+  - apiGroups: [networking.k8s.io]
+    resources: [ingresses]
+    verbs: [get, list, watch]
+  - apiGroups: [metrics.k8s.io]
+    resources: [pods]
+    verbs: [get, list]
+  # Needed for kubernetes.frontend.podDelete in app-config.production.yaml
+  - apiGroups: ['']
+    resources: [pods]
+    verbs: [delete]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -20,8 +49,8 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: cluster-admin
+  name: backstage-read-only
 subjects:
-- kind: ServiceAccount
-  name: backstage
-  namespace: default
+  - kind: ServiceAccount
+    name: backstage
+    namespace: default

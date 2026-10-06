@@ -2,12 +2,17 @@ apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   name: ${{ values.serviceName }}
-  description: ${{ values.description if values.description else values.serviceName }}
+{%- if values.description %}
+  description: ${{ values.description | dump }}
+{%- endif %}
   annotations:
+    github.com/project-slug: ${{ values.repoSlug }}
     backstage.io/kubernetes-id: ${{ values.serviceName }}
     backstage.io/kubernetes-namespace: ${{ values.namespace }}
-    backstage.io/techdocs-ref: dir:.
+{%- if values.techdocsRef %}
+    backstage.io/techdocs-ref: ${{ values.techdocsRef }}
+{%- endif %}
 spec:
-  type: service
-  lifecycle: development
+  type: ${{ values.type }}
+  lifecycle: ${{ values.lifecycle }}
   owner: ${{ values.owner }}
